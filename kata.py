@@ -1,14 +1,13 @@
 def solve_mine(map, n):
     # coding and coding...
     mine = [i.split(' ') for i in map.split('\n')]
-    field = MineSweeper (mine)
-    print(field)
-    #compare last stat_map with new stat_map
-    for i in range(7):
+    field = MineSweeper(mine)
+    #compare last map with new map
+    for i in range(10):
         print("Iteration: ", i)
-        st1 = field.ret_stat_map()
+        st1 = field.ret_map()
         field.maybe_solve()
-        st2 = field.ret_stat_map()
+        st2 = field.ret_map()
         if st1 == st2:
             print('we stuck')
         print(field)
@@ -19,17 +18,18 @@ class MineSweeper():
         self.map = map
         self.rows = len(map)
         self.columns = len(map[0])
-        self.stat_map = [[ self.check_neighbors(self.map, i, j) for j in range(self.columns)]for i in range(self.rows)]
-    
+        self.status_dict = {'b': [], 'n': [], 'x': [], 'u': []}
+        for i in range(self.rows):
+            for j in range(self.columns):
+                status = self.check_neighbors(self.map, i, j)
+                self.status_dict[status].append((i,j))
     def __str__(self):
         map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.map])
-        stat_map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.stat_map])
-        return 'Map:\n' + map_str + '\n\nStat map:\n'+ stat_map_str + '\n'
+        return 'Map:\n' + map_str + '\n'
 
-    def ret_stat_map(self):
-        stat_map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.stat_map])
-        return stat_map_str
-
+    def ret_map(self):
+        map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.map])
+        return map_str
 
     @staticmethod
     def check_neighbors(map, n, m):
@@ -66,10 +66,7 @@ class MineSweeper():
         # u - used
         # x - bomb
         if flag == 1:
-            if numbers > 0:
-                return 'h'
-            else:
-                return 'b'
+            return 'b'
         elif flag == 2:
             return 'x'
         else:
@@ -79,25 +76,9 @@ class MineSweeper():
                 return 'u'
             else:
                 return 'n'
-    @staticmethod
-    def h(stat_map, n, m):
-        near_h = []
-        for i in range(n-1, n+2):
-            for j in range(m-1, m+2):
-                if i == n and j == m:
-                    continue
-                elif i < 0 or j < 0:
-                    continue
-                else:
-                    try:
-                        if stat_map[i][j] == 'h':
-                            near_h.append((i,j))
-                    except IndexError:
-                        continue
-        return near_h
     
     @staticmethod
-    def x(stat_map, n, m):
+    def x(map, n, m):
         near_h = []
         count_x = 0
         count_h = 0
@@ -109,38 +90,34 @@ class MineSweeper():
                     continue
                 else:
                     try:
-                        if stat_map[i][j] == 'h':
+                        if map[i][j] == '?':
                             count_h += 1
                             near_h.append((i,j))
-                        elif stat_map[i][j] == 'x':
+                        elif map[i][j] == 'x':
                             count_x +=1
                     except IndexError:
                         continue
         return count_x, count_h, near_h
                     
     def maybe_solve(self):
-        #find n
-        for i in range(self.rows):
-            for j in range(self.columns):
-                #biiiiiiig check
-                if self.stat_map[i][j] == 'n':
-                    if self.map[i][j] == '0':
-                        near = self.h(self.stat_map, i, j)
-                        for row, column in near:
-                            self.map[row][column] = open(row,column)
-                            #self.stat_map[row][column] = 'n'
-                        #self.stat_map[i][j] == 'u'
-                    else:
-                        c_x, c_h, near = self.x(self.stat_map, i, j)
-                        if c_x + c_h == int(self.map[i][j]):
-                            for row, column in near:
-                                self.map[row][column] = 'x'
-                        elif c_x == int(self.map[i][j]):
-                            for row, column in near:
-                                self.map[row][column] = open(row,column)
-                self.stat_map = [[ self.check_neighbors(self.map, i, j) for j in range(self.columns)]for i in range(self.rows)]
+        for row, column in self.status_dict['n']:
+            #check neighb
+            c_x, c_h, near = self.x(self.map, row, column)
+            if c_x + c_h == int(self.map[row][column]):
+                for r, c in near:
+                    self.map[r][c] = 'x'
+                    self.status_dict['b'].remove((r,c))
+                    self.status_dict['x'].append((r,c))
+                self.status_dict['n'].remove((row,column))
+                self.status_dict['u'].append((row,column))
+            elif c_x == int(self.map[row][column]):
+                for r, c in near:
+                    self.map[r][c] = open(r,c)
+                    self.status_dict['b'].remove((r,c))
+                    self.status_dict['n'].append((r,c))
+                self.status_dict['n'].remove((row,column))
+                self.status_dict['u'].append((row,column))
         return 0
-
 
 gamemap = """
 ? ? 0 ? ? ? 0 0 ? ? ? 0 0 0 0 ? ? ? 0
