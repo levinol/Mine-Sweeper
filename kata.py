@@ -3,17 +3,14 @@ def solve_mine(map, n):
     mine = [i.split(' ') for i in map.split('\n')]
     field = MineSweeper(mine, n)
     #compare last map with new map
-    flag = 0
     for i in range(10):
         print("Iteration: ", i)
         st1 = field.get_map()
-        field.maybe_solve(flag)
+        field.maybe_solve()
         st2 = field.get_map()
         if st1 == st2:
             print('we stuck')
-            flag = 1
-        else:
-            flag = 0
+            field.modulate_solve()
         print(field)
     return 0
 
@@ -104,7 +101,7 @@ class MineSweeper():
                         continue
         return count_x, count_h, near_h
                     
-    def maybe_solve(self, flag):
+    def maybe_solve(self):
         numbers = self.status_dict['n'].copy()
         for row, column in numbers:
             #check neighb
@@ -123,11 +120,20 @@ class MineSweeper():
                     self.status_dict['n'].append((r,c))
                 self.status_dict['n'].remove((row,column))
                 self.status_dict['u'].append((row,column))
-            elif c_x + c_h > int(self.map[row][column]) and flag:
-                print("Im in ", row, column)
-                print(int(self.map[row][column]) - c_x, 'bombs near')
-                print(near)
         return 0
+
+    def modulate_solve(self):
+        numbers = self.status_dict['n'].copy()
+        temp_dict ={}
+        for row, column in numbers:
+            c_x, c_h, near = self.x(self.map, row, column)
+            #print("Im in ", row, column)
+            #print(int(self.map[row][column]) - c_x, 'bombs near')
+            #print(near)
+            temp_dict[(row,column)] = (int(self.map[row][column]) - c_x, len(near), near)
+        temp_order_arr = sorted(temp_dict, key=lambda k: (temp_dict[k][1], temp_dict[k][0]))
+        for i in temp_order_arr:
+            print(temp_dict[i])
 
 gamemap = """
 ? ? ? ? ? ?
