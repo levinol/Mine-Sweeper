@@ -105,7 +105,8 @@ class MineSweeper():
         return count_x, count_h, near_h
                     
     def maybe_solve(self, flag):
-        for row, column in self.status_dict['n']:
+        numbers = self.status_dict['n'].copy()
+        for row, column in numbers:
             #check neighb
             c_x, c_h, near = self.x(self.map, row, column)
             if c_x + c_h == int(self.map[row][column]):
