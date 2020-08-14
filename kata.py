@@ -1,21 +1,26 @@
 def solve_mine(map, n):
     # coding and coding...
     mine = [i.split(' ') for i in map.split('\n')]
-    field = MineSweeper(mine)
+    field = MineSweeper(mine, n)
     #compare last map with new map
+    flag = 0
     for i in range(10):
         print("Iteration: ", i)
-        st1 = field.ret_map()
-        field.maybe_solve()
-        st2 = field.ret_map()
+        st1 = field.get_map()
+        field.maybe_solve(flag)
+        st2 = field.get_map()
         if st1 == st2:
             print('we stuck')
+            flag = 1
+        else:
+            flag = 0
         print(field)
     return 0
 
 class MineSweeper():
-    def __init__(self, map):
+    def __init__(self, map, n):
         self.map = map
+        self.n = n
         self.rows = len(map)
         self.columns = len(map[0])
         self.status_dict = {'b': [], 'n': [], 'x': [], 'u': []}
@@ -27,7 +32,7 @@ class MineSweeper():
         map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.map])
         return 'Map:\n' + map_str + '\n'
 
-    def ret_map(self):
+    def get_map(self):
         map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.map])
         return map_str
 
@@ -99,7 +104,7 @@ class MineSweeper():
                         continue
         return count_x, count_h, near_h
                     
-    def maybe_solve(self):
+    def maybe_solve(self, flag):
         for row, column in self.status_dict['n']:
             #check neighb
             c_x, c_h, near = self.x(self.map, row, column)
@@ -117,57 +122,27 @@ class MineSweeper():
                     self.status_dict['n'].append((r,c))
                 self.status_dict['n'].remove((row,column))
                 self.status_dict['u'].append((row,column))
+            elif c_x + c_h > int(self.map[row][column]) and flag:
+                print("Im in ", row, column)
+                print(int(self.map[row][column]) - c_x, 'bombs near')
+                print(near)
         return 0
 
 gamemap = """
-? ? 0 ? ? ? 0 0 ? ? ? 0 0 0 0 ? ? ? 0
-? ? 0 ? ? ? 0 0 ? ? ? 0 0 0 0 ? ? ? ?
-? ? 0 ? ? ? ? ? ? ? ? 0 0 0 0 ? ? ? ?
-0 ? ? ? ? ? ? ? ? ? ? 0 0 0 0 0 ? ? ?
-0 ? ? ? ? ? ? ? ? ? 0 0 0 0 0 0 0 0 0
-0 ? ? ? 0 0 0 ? ? ? 0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 ? ? ? ? ? ? ? 0 0 0 0 0
-0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0 0 0 0 0
-0 0 ? ? ? 0 ? ? ? 0 ? ? ? ? 0 0 0 0 0
-0 0 ? ? ? ? ? ? ? 0 0 0 0 0 0 ? ? ? 0
-0 0 ? ? ? ? ? ? ? ? ? 0 0 0 0 ? ? ? 0
-0 0 0 0 ? ? ? ? ? ? ? 0 0 0 0 ? ? ? 0
-0 0 0 0 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ?
-0 0 ? ? ? ? ? ? 0 0 0 0 0 0 0 0 ? ? ?
-0 0 ? ? ? ? ? ? ? 0 0 0 0 0 0 0 ? ? ?
-0 0 ? ? ? ? ? ? ? ? 0 0 0 0 0 0 0 ? ?
-0 0 0 0 0 0 ? ? ? ? 0 0 0 ? ? ? 0 ? ?
-0 0 0 ? ? ? ? ? ? ? 0 0 0 ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? 0 0 0 ? ? ? 0 ? ? ? ?
-0 0 0 0 ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ?
-0 0 0 0 ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ?
-0 0 0 0 ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ?
+? ? ? ? ? ?
+? ? ? ? ? ?
+? ? ? 0 ? ?
+? ? ? ? ? ?
+? ? ? ? ? ?
+0 0 0 ? ? ?
 """.strip()
 result = """
-1 1 0 1 1 1 0 0 1 1 1 0 0 0 0 1 1 1 0
-x 1 0 1 x 1 0 0 2 x 2 0 0 0 0 1 x 2 1
-1 1 0 2 3 3 1 1 3 x 2 0 0 0 0 1 2 x 1
-0 1 1 2 x x 1 2 x 3 1 0 0 0 0 0 1 1 1
-0 1 x 2 2 2 1 3 x 3 0 0 0 0 0 0 0 0 0
-0 1 1 1 0 0 0 2 x 2 0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 1 1 1 1 2 2 1 0 0 0 0 0
-0 0 0 0 0 0 0 0 0 0 1 x x 1 0 0 0 0 0
-0 0 1 1 1 0 1 1 1 0 1 2 2 1 0 0 0 0 0
-0 0 1 x 2 1 3 x 2 0 0 0 0 0 0 1 1 1 0
-0 0 1 1 2 x 3 x 3 1 1 0 0 0 0 1 x 1 0
-0 0 0 0 1 2 3 2 2 x 1 0 0 0 0 1 1 1 0
-0 0 0 0 0 1 x 1 1 1 1 0 0 0 0 0 1 1 1
-0 0 1 1 2 2 2 1 0 0 0 0 0 0 0 0 1 x 1
-0 0 1 x 2 x 2 1 1 0 0 0 0 0 0 0 1 1 1
-0 0 1 1 2 1 3 x 3 1 0 0 0 0 0 0 0 1 1
-0 0 0 0 0 0 2 x x 1 0 0 0 1 1 1 0 1 x
-0 0 0 1 1 1 1 2 2 1 0 0 0 1 x 1 1 2 2
-0 0 0 1 x 3 2 1 0 0 0 1 1 2 1 1 1 x 2
-0 0 0 1 2 x x 1 0 0 0 1 x 1 0 1 2 3 x
-0 0 0 0 1 2 2 1 1 1 1 1 1 1 0 1 x 3 2
-0 0 0 0 1 1 1 1 2 x 1 1 1 1 0 2 3 x 2
-0 0 0 0 1 x 1 1 x 2 1 1 x 1 0 1 x 3 x
+1 x 1 1 x 1
+2 2 2 1 2 2
+2 x 2 0 1 x
+2 x 2 1 2 2
+1 1 1 1 x 1
+0 0 0 1 1 1
 """.strip()
 
 def open(n,m):
