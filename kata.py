@@ -153,7 +153,7 @@ class MineSweeper():
             for j in temp_dict[i][2]:
                 #near maybe bombs
                 print(i, '->', j)
-                maybe_x, fo_arr, flag = modulate_x(self.map, self.status_dict, i, j)
+                maybe_x, fo_arr, flag = modulate_x(self.map, self.status_dict, i, j,left_bombs)
                 if flag == 1:
                     self.map[j[0]][j[1]] = open(j[0],j[1])
                     changes_flag = 1
@@ -161,9 +161,9 @@ class MineSweeper():
                     self.status_dict['b'].remove(j)
                     self.status_dict['n'].append(j)
                     break
-                #elif flag == 2:
-                #    print('Развилка хуле')
-                #    continue
+                elif flag == 2:
+                    print('Развилка получаеца')
+                    continue
                 else:
                     #суммировать maybe_x и fo_arr в словарь
                     for xs in maybe_x:
@@ -196,21 +196,34 @@ class MineSweeper():
                     self.status_dict['b'].remove(cell)
                     self.status_dict['n'].append(cell)
                     break
+            
+            #final thoughs
+            if left_bombs == 1 and iter_count < len(temp_bomb_dict):
+                for i in set(temp_bomb_dict.keys()) - set(temp_dict[i][2]):
+                    print('Kinda final open', i)
+                    self.map[i[0]][i[1]] = open(i[0],i[1])
+                    changes_flag = 1
+                    self.status_dict['b'].remove(i)
+                    self.status_dict['n'].append(i)
+                    break
+
         if changes_flag == 1:
             return 1
         else: return 0
         
 
 
-def modulate_x(map, stat_dict, number, bomb):
+def modulate_x(map, stat_dict, number, bomb, n_left):
     maybe_x_arr = [bomb]
     fake_opened_arr = []
     #check neighb
     #while?
     numbers = intersection(map, number, bomb)
     flag = 0
+    
     while numbers and flag==0:
         numers_for_iteration = numbers.copy()
+        fork_counter = 0
         for row, column in numers_for_iteration:
             #check neighb
             c_x, c_h, near = x_fake(map, maybe_x_arr, fake_opened_arr, row, column)
@@ -229,7 +242,15 @@ def modulate_x(map, stat_dict, number, bomb):
             elif c_x + c_h > int(map[row][column]):
                 #развилка
                 print('Код красный код красный')
-                flag = 2
+                fork_counter += 1
+                if len(maybe_x_arr) == n_left:
+                    print('We are in fucked scenario')
+                    flag = 1
+
+                if fork_counter == len(numbers):
+                    flag = 2
+                else:
+                    print('не циклись')
             elif c_h == 0 and c_x:
                 print('We are in fucked scenario')
                 flag = 1
@@ -266,7 +287,7 @@ def x_fake(map, bomb_arr, fake_arr, n, m):
     return count_x, count_h, near_h
 
 def intersection(map, number, bomb):
-    return near_n(map, number)&near_n(map, bomb)
+    return near_n(map, number)|near_n(map, bomb)
 
 def near_n(map, cell):
     n = cell[0]
@@ -289,38 +310,54 @@ def near_n(map, cell):
 
 
 gamemap = """
-0 0 0 0 0 0 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 0 0 0 ? ? ? ? ? ? 0
-0 0 0 0 0 0 0 0 0 0 0 0 ? ? ? 0 ? ? ? 0 0 0 0 ? ? ? ? ? ? 0
-? ? ? 0 0 0 0 ? ? ? 0 0 0 0 ? ? ? ? ? 0 0 0 0 ? ? ? ? ? ? 0
-? ? ? ? ? ? 0 ? ? ? ? ? 0 0 ? ? ? ? ? 0 0 0 0 ? ? ? 0 0 0 0
-? ? ? ? ? ? 0 ? ? ? ? ? 0 0 ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ?
-0 ? ? ? ? ? 0 0 0 ? ? ? 0 ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ?
-0 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 ? ? ? 0
-0 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 ? ? ? 0
-? ? ? ? 0 ? ? ? ? 0 0 0 ? ? ? ? ? ? ? 0 0 ? ? ? 0 0 ? ? ? 0
-? ? ? ? 0 ? ? ? ? ? 0 0 ? ? ? ? ? ? ? 0 0 0 ? ? ? 0 0 0 0 0
-? ? ? ? ? ? ? ? ? ? 0 0 ? ? ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
-? ? ? ? ? ? ? ? ? ? 0 0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
-? ? ? ? ? ? ? 0 0 ? ? ? 0 0 ? ? ? 0 0 0 0 0 ? ? ? ? 0 0 0 0
-? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 0 0
+0 0 0 0 0 0 0 ? ? ?
+? ? ? ? ? ? 0 ? ? ?
+? ? ? ? ? ? 0 ? ? ?
+? ? ? ? ? ? 0 ? ? ?
+0 0 ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? ?
+0 0 ? ? ? ? ? ? ? ?
+0 0 0 0 ? ? ? ? ? ?
+0 0 0 0 ? ? ? ? ? ?
+0 0 0 ? ? ? ? 0 0 0
+0 0 0 ? ? ? ? 0 0 0
+0 0 0 ? ? ? ? 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+? ? 0 ? ? ? 0 0 0 0
+? ? 0 ? ? ? 0 0 0 0
+? ? ? ? ? ? ? ? ? 0
+? ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? ? ? ? ?
+0 0 ? ? ? 0 0 ? ? ?
+0 0 ? ? ? ? ? ? ? ?
+0 0 ? ? ? ? ? ? ? ?
+0 0 0 0 0 ? ? ? ? ?
 """.strip()
 result = """
-0 0 0 0 0 0 0 0 0 0 0 0 1 x 1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0
-0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 1 1 1 0 0 0 0 2 x 2 1 x 1 0
-1 1 1 0 0 0 0 1 1 1 0 0 0 0 1 1 2 x 1 0 0 0 0 2 x 2 1 1 1 0
-1 x 1 1 1 1 0 1 x 2 1 1 0 0 1 x 2 1 1 0 0 0 0 1 1 1 0 0 0 0
-1 2 2 3 x 2 0 1 1 2 x 1 0 0 1 2 2 1 0 0 0 0 0 1 1 1 0 0 1 1
-0 1 x 3 x 2 0 0 0 1 1 1 0 1 2 3 x 1 0 0 0 0 0 1 x 1 0 0 1 x
-0 1 1 3 3 3 2 1 1 1 1 2 1 2 x x 2 2 1 1 0 0 0 1 1 1 1 1 2 1
-0 0 0 1 x x 2 x 1 1 x 2 x 2 3 3 3 2 x 1 0 1 1 1 0 0 2 x 2 0
-0 1 1 2 2 2 3 2 2 1 1 2 1 1 1 x 2 x 2 1 0 1 x 1 0 0 2 x 2 0
-1 2 x 1 0 1 2 x 1 0 0 0 1 1 2 2 3 2 1 0 0 1 1 1 0 0 1 1 1 0
-1 x 2 1 0 1 x 3 2 1 0 0 1 x 1 1 x 2 1 0 0 0 1 1 1 0 0 0 0 0
-1 1 2 1 2 2 2 2 x 1 0 0 1 1 1 1 2 x 1 0 0 0 1 x 2 1 0 0 0 0
-1 1 2 x 2 x 1 1 1 1 0 0 0 0 1 1 2 1 1 0 0 0 1 2 x 1 0 0 0 0
-1 x 3 2 2 1 1 0 0 1 1 1 0 0 1 x 1 0 0 0 0 0 1 2 2 1 0 0 0 0
-1 2 x 1 0 0 0 0 0 1 x 1 0 0 1 1 1 0 0 0 0 0 1 x 1 0 0 0 0 0
+0 0 0 0 0 0 0 1 1 1
+1 1 1 1 1 1 0 2 x 2
+1 x 2 2 x 1 0 2 x 2
+1 1 2 x 2 1 0 1 1 1
+0 0 2 2 2 1 1 1 0 0
+0 0 1 x 1 1 x 2 1 1
+0 0 1 1 2 2 2 3 x 2
+0 0 0 0 1 x 1 2 x 2
+0 0 0 0 1 1 1 1 1 1
+0 0 0 1 2 2 1 0 0 0
+0 0 0 1 x x 1 0 0 0
+0 0 0 1 2 2 1 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 1 0 0 0 0
+x 1 0 1 x 1 0 0 0 0
+2 3 1 3 2 2 1 1 1 0
+x 2 x 2 x 1 1 x 2 1
+1 2 1 2 1 1 1 2 x 1
+0 0 1 1 1 0 0 1 1 1
+0 0 1 x 1 1 1 2 2 2
+0 0 1 1 1 1 x 2 x x
+0 0 0 0 0 1 1 2 2 2
 """.strip()
 
 def open(n,m):
@@ -330,4 +367,4 @@ def open(n,m):
         raise ValueError
     return res[n][m]
     
-print(solve_mine(gamemap, 45))
+print(solve_mine(gamemap, 23))
