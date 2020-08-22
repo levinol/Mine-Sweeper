@@ -40,7 +40,6 @@ class MineSweeper():
     def __str__(self):
         map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.map])
         return 'Map:\n' + map_str + '\n'
-
     def get_map(self):
         map_str = '\n'.join([ (' '.join([str(elem) for elem in row])) for row in self.map])
         return map_str
@@ -137,6 +136,7 @@ class MineSweeper():
   
     def modulate_solve(self):
         changes_flag = 0
+        #Сортирую от наименьшего кол-ва соседей & мин к наибольшему  
         numbers = self.status_dict['n'].copy()
         temp_dict ={}
         for row, column in numbers:
@@ -146,7 +146,13 @@ class MineSweeper():
         left_bombs = self.n - len(self.status_dict['x'])
         intersec_set = set()
         print('Осталось ', left_bombs, ' бомб')
-        
+        # - это че
+        if left_bombs == 0:
+            if len(temp_dict) == 1 and temp_dict[temp_order_arr[0]][2] == []:
+                self.status_dict['n'].remove(temp_order_arr[0])
+                return 0
+
+        #Проход по словарю 
         for i in temp_order_arr:
             temp_bomb_dict = {}
             temp_fo_dict = {}
@@ -180,32 +186,33 @@ class MineSweeper():
             print('Bombs:', temp_bomb_dict, len(temp_bomb_dict))
             for cell, count in temp_bomb_dict.items():
                 if count == iter_count:
-                    print('Opa bimba', cell, count)
+                    print('Modulation found bomb', cell, count)
                     self.map[cell[0]][cell[1]] = 'x'
                     changes_flag = 1
                     self.status_dict['b'].remove(cell)
                     self.status_dict['x'].append(cell)
-                    break
                 
             print('F_o:', temp_fo_dict)
             for cell, count in temp_fo_dict.items():
                 if count == iter_count:
-                    print('Opa open', cell, count)
+                    print('Modulation found open cell', cell, count)
                     self.map[cell[0]][cell[1]] = open(cell[0],cell[1])
                     changes_flag = 1
                     self.status_dict['b'].remove(cell)
                     self.status_dict['n'].append(cell)
-                    break
             
             #final thoughs
+            #Речекнуть
             if left_bombs == 1 and iter_count < len(temp_bomb_dict):
                 for i in set(temp_bomb_dict.keys()) - set(temp_dict[i][2]):
                     print('Kinda final open', i)
                     self.map[i[0]][i[1]] = open(i[0],i[1])
                     changes_flag = 1
                     self.status_dict['b'].remove(i)
-                    self.status_dict['n'].append(i)
-                    break
+                    self.status_dict['n'].append(i)    
+            
+            if changes_flag == 1:
+                break
 
         if changes_flag == 1:
             return 1
@@ -218,27 +225,32 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
     fake_opened_arr = []
     #check neighb
     #while?
-    numbers = intersection(map, number, bomb)
+    used_set = set(stat_dict['u'])
+    used_numbers = []
+    numbers = intersection(map, number, bomb,used_set)
     flag = 0
     
     while numbers and flag==0:
         numers_for_iteration = numbers.copy()
         fork_counter = 0
         for row, column in numers_for_iteration:
+            #ЧЕКНУТЬ СОСЕДЕЙ НА ДРУГОЙ СТОРОНЕ
             #check neighb
             c_x, c_h, near = x_fake(map, maybe_x_arr, fake_opened_arr, row, column)
             if c_x + c_h == int(map[row][column]):
                 for r, c in near:
                     maybe_x_arr.append((r,c))
-                    numbers.update(intersection(map,(row,column), (r,c)))
+                    numbers.update(intersection(map,(row,column), (r,c), used_set))
                 #remove from numbers
                 numbers.remove((row,column))
+                used_numbers.append((row,column))
             elif c_x == int(map[row][column]):
                 for r, c in near:
                     fake_opened_arr.append((r,c))
-                    numbers.update(intersection(map,(row,column), (r,c)))
+                    numbers.update(intersection(map,(row,column), (r,c), used_set))
                 #remove from numbers
                 numbers.remove((row,column))
+                used_numbers.append((row,column))
             elif c_x + c_h > int(map[row][column]):
                 #развилка
                 print('Код красный код красный')
@@ -257,6 +269,14 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
             elif c_x == 0 and int(map[row][column])!= 0:
                 print('We are in fucked scenario')
                 flag = 1
+            
+    if n_left == len(maybe_x_arr):
+        if set(stat_dict['n']) - set(used_numbers):
+            print('We are in fucked scenario')
+            flag = 1
+        #print('Файнал чек',len(set(stat_dict['n'])), len(set(used_numbers)),  set(used_numbers) - set(stat_dict['n']), sep = '\n')
+        #print(stat_dict)
+    
     return maybe_x_arr, fake_opened_arr, flag
 
 
@@ -286,8 +306,8 @@ def x_fake(map, bomb_arr, fake_arr, n, m):
                     continue
     return count_x, count_h, near_h
 
-def intersection(map, number, bomb):
-    return near_n(map, number)|near_n(map, bomb)
+def intersection(map, number, bomb, used_set):
+    return (near_n(map, number)|near_n(map, bomb)) - used_set
 
 def near_n(map, cell):
     n = cell[0]
@@ -310,54 +330,20 @@ def near_n(map, cell):
 
 
 gamemap = """
-0 0 0 0 0 0 0 ? ? ?
-? ? ? ? ? ? 0 ? ? ?
-? ? ? ? ? ? 0 ? ? ?
-? ? ? ? ? ? 0 ? ? ?
-0 0 ? ? ? ? ? ? 0 0
-0 0 ? ? ? ? ? ? ? ?
-0 0 ? ? ? ? ? ? ? ?
 0 0 0 0 ? ? ? ? ? ?
-0 0 0 0 ? ? ? ? ? ?
-0 0 0 ? ? ? ? 0 0 0
-0 0 0 ? ? ? ? 0 0 0
-0 0 0 ? ? ? ? 0 0 0
-0 0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0 0
-? ? 0 ? ? ? 0 0 0 0
-? ? 0 ? ? ? 0 0 0 0
+0 0 0 ? ? ? ? ? ? ?
+0 ? ? ? ? ? ? ? ? ?
 ? ? ? ? ? ? ? ? ? 0
-? ? ? ? ? ? ? ? ? ?
-? ? ? ? ? ? ? ? ? ?
-0 0 ? ? ? 0 0 ? ? ?
-0 0 ? ? ? ? ? ? ? ?
-0 0 ? ? ? ? ? ? ? ?
-0 0 0 0 0 ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0
+? ? ? 0 0 0 0 0 0 0
 """.strip()
 result = """
-0 0 0 0 0 0 0 1 1 1
-1 1 1 1 1 1 0 2 x 2
-1 x 2 2 x 1 0 2 x 2
-1 1 2 x 2 1 0 1 1 1
-0 0 2 2 2 1 1 1 0 0
-0 0 1 x 1 1 x 2 1 1
-0 0 1 1 2 2 2 3 x 2
-0 0 0 0 1 x 1 2 x 2
 0 0 0 0 1 1 1 1 1 1
-0 0 0 1 2 2 1 0 0 0
-0 0 0 1 x x 1 0 0 0
-0 0 0 1 2 2 1 0 0 0
-0 0 0 0 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0 0
-1 1 0 1 1 1 0 0 0 0
-x 1 0 1 x 1 0 0 0 0
-2 3 1 3 2 2 1 1 1 0
-x 2 x 2 x 1 1 x 2 1
-1 2 1 2 1 1 1 2 x 1
-0 0 1 1 1 0 0 1 1 1
-0 0 1 x 1 1 1 2 2 2
-0 0 1 1 1 1 x 2 x x
-0 0 0 0 0 1 1 2 2 2
+0 0 0 1 2 x 2 2 x 1
+0 1 1 2 x 2 2 x 2 1
+1 2 x 2 1 1 1 1 1 0
+1 x 2 1 0 0 0 0 0 0
+1 1 1 0 0 0 0 0 0 0
 """.strip()
 
 def open(n,m):
@@ -367,4 +353,4 @@ def open(n,m):
         raise ValueError
     return res[n][m]
     
-print(solve_mine(gamemap, 23))
+print(solve_mine(gamemap, 6))
