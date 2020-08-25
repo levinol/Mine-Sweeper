@@ -3,6 +3,18 @@ def solve_mine(map, n):
     mine = [i.split(' ') for i in map.split('\n')]
     field = MineSweeper(mine, n)
     #compare last map with new map
+    if len(field.status_dict['n']) == 0:
+        print('No bomb scenario')
+        if n == 0:
+            for r, c in field.status_dict['b']:
+                field.map[r][c] = open(r,c)
+            return field.get_map()
+        elif n == len(field.status_dict['b']):
+            for r, c in field.status_dict['b']:
+                field.map[r][c] = 'x'
+            return field.get_map()
+        else:
+            return '?'
     i = 0
     counter = 0
     while (field.status_dict['n'] and counter <2):
@@ -21,10 +33,24 @@ def solve_mine(map, n):
             counter = 0
         print(field)
         i +=1
+    
     if counter ==2:
         return '?'
     else:
-        return st2
+        if len(field.status_dict['b']) > 0:
+            if n - len(field.status_dict['x']) == 0:
+                for r, c in field.status_dict['b']:
+                        field.map[r][c] = open(r,c)
+                return field.get_map()
+            elif n - len(field.status_dict['x']) == len(field.status_dict['b']):
+                for r, c in field.status_dict['b']:
+                    field.map[r][c] = 'x'
+                return field.get_map()
+            else:
+                print('How?')
+                return '?'
+        else:
+            return st2
 
 class MineSweeper():
     def __init__(self, map, n):
@@ -297,6 +323,9 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
             elif c_x == 0 and ma_numb!= 0:
                 print('We are in fucked scenario')
                 flag = 1
+        if n_left - len(maybe_x_arr) > 0 and set(maybe_x_arr) | set(fake_opened_arr) == set(stat_dict['b']):
+            print('We are in fucked scenario')
+            flag = 1
             
     if n_left == len(maybe_x_arr):
         if set(stat_dict['n']) - set(used_numbers):
@@ -358,66 +387,28 @@ def near_n(map, cell):
 
 #58
 gamemap = """
-0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
-0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
-0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? 0 0 ? ?
-0 0 0 ? ? ? 0 0 0 0 ? ? ? ? ? ? 0 0 ? ?
-0 0 0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-0 ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-0 ? ? ? 0 ? ? ? 0 0 0 0 0 ? ? ? 0 ? ? ?
-0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
-0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
-0 ? ? ? 0 0 0 ? ? ? ? 0 0 0 0 ? ? ? 0 0
-0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
-0 ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ? ? 0
-0 ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
-? ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
-? ? 0 0 0 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ?
-? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? ?
-? ? ? ? 0 0 ? ? ? ? ? 0 ? ? ? 0 0 ? ? ?
-? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 0 0 0
-? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ? 0 0 0 0
-0 ? ? ? ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
-0 0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
-0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ? ? 0 0 0 0
-0 0 0 0 0 0 0 ? ? ? ? 0 ? ? ? ? 0 0 0 0
-? ? ? ? ? 0 0 ? ? ? ? ? ? ? ? ? ? ? ? 0
-? ? ? ? ? 0 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
-? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ?
-? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
-? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
-? ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 0 0 0
+0 0 0 0
+? ? 0 0
+? ? ? ?
+? ? ? ?
+? ? ? ?
+? ? 0 0
+0 0 0 0
+0 0 0 0
+0 0 0 0
 """.strip()
 result = """
-0 1 1 2 1 1 0 0 0 1 1 2 2 2 2 x 1 0 0 0
-0 1 x 2 x 1 0 0 0 1 x 3 x x 3 2 1 0 0 0
-0 1 1 2 1 1 0 0 0 1 2 x 3 3 x 1 0 0 1 1
-0 0 0 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 1 x
-0 0 0 1 x 1 0 0 0 0 0 0 0 0 0 0 0 1 2 2
-0 1 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 1
-0 1 x 1 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1
-0 1 1 1 0 1 x 2 2 2 1 0 0 1 x 2 1 1 0 0
-0 1 1 1 0 1 1 2 x x 1 0 0 1 1 2 x 1 0 0
-0 1 x 1 0 0 0 1 2 2 1 0 0 0 0 2 2 2 0 0
-0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
-0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 1 2 x 1 0
-0 1 x 1 0 0 0 0 0 1 x 2 1 1 0 1 3 3 2 0
-1 2 1 1 0 0 0 0 0 1 1 2 x 1 0 2 x x 1 0
-x 1 0 0 0 0 0 0 0 0 0 1 1 1 0 2 x 4 3 2
-1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 2 x x
-1 2 x 1 0 0 1 2 3 2 1 0 1 1 1 0 0 1 2 2
-1 x 3 3 1 1 1 x x x 1 0 2 x 2 0 0 0 0 0
-1 2 x 2 x 1 2 3 4 2 1 0 2 x 3 1 0 0 0 0
-0 1 1 2 2 2 2 x 1 0 0 0 1 2 x 1 0 0 0 0
-0 0 0 0 1 x 2 1 1 0 0 0 1 2 2 1 0 0 0 0
-0 0 0 0 1 1 1 0 0 0 0 0 1 x 2 1 0 0 0 0
-0 0 0 0 0 0 0 1 2 2 1 0 1 2 x 1 0 0 0 0
-1 1 1 1 1 0 0 1 x x 2 1 1 1 2 2 2 1 1 0
-x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
-2 x 3 x 2 0 0 0 0 0 1 2 2 1 1 1 2 1 2 x
-2 3 3 3 2 1 0 0 0 0 0 1 x 1 0 0 0 1 2 2
-x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
-1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
+0 0 0 0
+0 0 0 0
+1 1 0 0
+x 2 1 1
+x 3 1 x
+x 2 1 1
+1 1 0 0
+0 0 0 0
+0 0 0 0
+0 0 0 0
 """.strip()
 
 
@@ -429,4 +420,4 @@ def open(n,m):
         raise ValueError
     return res[n][m]
     
-print(solve_mine(gamemap, 58))
+print(solve_mine(gamemap, 4))
