@@ -237,21 +237,24 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
             #ЧЕКНУТЬ СОСЕДЕЙ НА ДРУГОЙ СТОРОНЕ
             #check neighb
             c_x, c_h, near = x_fake(map, maybe_x_arr, fake_opened_arr, row, column)
-            if c_x + c_h == int(map[row][column]):
+            ma_numb = int(map[row][column])
+            if c_x + c_h == ma_numb:
                 for r, c in near:
                     maybe_x_arr.append((r,c))
                     numbers.update(intersection(map,(row,column), (r,c), used_set))
                 #remove from numbers
+                fork_counter = 0
                 numbers.remove((row,column))
                 used_numbers.append((row,column))
-            elif c_x == int(map[row][column]):
+            elif c_x == ma_numb:
                 for r, c in near:
                     fake_opened_arr.append((r,c))
                     numbers.update(intersection(map,(row,column), (r,c), used_set))
                 #remove from numbers
+                fork_counter = 0
                 numbers.remove((row,column))
                 used_numbers.append((row,column))
-            elif c_x + c_h > int(map[row][column]):
+            elif c_x + c_h > ma_numb:
                 #развилка
                 print('Код красный код красный')
                 fork_counter += 1
@@ -260,13 +263,38 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
                     flag = 1
 
                 if fork_counter == len(numbers):
-                    flag = 2
+                    #вот сюды
+                    if n_left - len(maybe_x_arr) == 1:
+                        print('Fork intersection')
+                        near_set = set()
+                        for forks in numbers:
+                            c_x2, c_h2, near2 = x_fake(map, maybe_x_arr, fake_opened_arr, forks[0], forks[1])
+                            if near_set:
+                                near_set.intersection_update(near2)
+                            else:
+                                near_set = set(near2)
+                        
+                        if len(near_set) == 1:
+                            for r, c in near_set:
+                                maybe_x_arr.append((r,c))
+                                numbers.update(intersection(map,(row,column), (r,c), used_set))
+                            #remove from numbers
+                            fork_counter = 0
+                            #numbers.remove((row,column))
+                            #used_numbers.append((row,column))
+                        else:
+                            flag = 2
+                    else:
+                        flag = 2
                 else:
                     print('не циклись')
+            elif ma_numb - c_x > c_h:
+                print('We are in fucked scenario')
+                flag = 1
             elif c_h == 0 and c_x:
                 print('We are in fucked scenario')
                 flag = 1
-            elif c_x == 0 and int(map[row][column])!= 0:
+            elif c_x == 0 and ma_numb!= 0:
                 print('We are in fucked scenario')
                 flag = 1
             
@@ -328,23 +356,71 @@ def near_n(map, cell):
     return near_n
 
 
-
+#58
 gamemap = """
-0 0 0 0 ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? ? ?
-0 ? ? ? ? ? ? ? ? ?
-? ? ? ? ? ? ? ? ? 0
-? ? ? ? 0 0 0 0 0 0
-? ? ? 0 0 0 0 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? 0 0 ? ?
+0 0 0 ? ? ? 0 0 0 0 ? ? ? ? ? ? 0 0 ? ?
+0 0 0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 ? ? ? 0 ? ? ? 0 0 0 0 0 ? ? ? 0 ? ? ?
+0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
+0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
+0 ? ? ? 0 0 0 ? ? ? ? 0 0 0 0 ? ? ? 0 0
+0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
+0 ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ? ? 0
+0 ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
+? ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
+? ? 0 0 0 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? ?
+? ? ? ? 0 0 ? ? ? ? ? 0 ? ? ? 0 0 ? ? ?
+? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 0 0 0
+? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ? 0 0 0 0
+0 ? ? ? ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 0 0 0 ? ? ? ? 0 ? ? ? ? 0 0 0 0
+? ? ? ? ? 0 0 ? ? ? ? ? ? ? ? ? ? ? ? 0
+? ? ? ? ? 0 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
+? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
 """.strip()
 result = """
-0 0 0 0 1 1 1 1 1 1
-0 0 0 1 2 x 2 2 x 1
-0 1 1 2 x 2 2 x 2 1
-1 2 x 2 1 1 1 1 1 0
-1 x 2 1 0 0 0 0 0 0
-1 1 1 0 0 0 0 0 0 0
+0 1 1 2 1 1 0 0 0 1 1 2 2 2 2 x 1 0 0 0
+0 1 x 2 x 1 0 0 0 1 x 3 x x 3 2 1 0 0 0
+0 1 1 2 1 1 0 0 0 1 2 x 3 3 x 1 0 0 1 1
+0 0 0 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 1 x
+0 0 0 1 x 1 0 0 0 0 0 0 0 0 0 0 0 1 2 2
+0 1 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 1
+0 1 x 1 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1
+0 1 1 1 0 1 x 2 2 2 1 0 0 1 x 2 1 1 0 0
+0 1 1 1 0 1 1 2 x x 1 0 0 1 1 2 x 1 0 0
+0 1 x 1 0 0 0 1 2 2 1 0 0 0 0 2 2 2 0 0
+0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
+0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 1 2 x 1 0
+0 1 x 1 0 0 0 0 0 1 x 2 1 1 0 1 3 3 2 0
+1 2 1 1 0 0 0 0 0 1 1 2 x 1 0 2 x x 1 0
+x 1 0 0 0 0 0 0 0 0 0 1 1 1 0 2 x 4 3 2
+1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 2 x x
+1 2 x 1 0 0 1 2 3 2 1 0 1 1 1 0 0 1 2 2
+1 x 3 3 1 1 1 x x x 1 0 2 x 2 0 0 0 0 0
+1 2 x 2 x 1 2 3 4 2 1 0 2 x 3 1 0 0 0 0
+0 1 1 2 2 2 2 x 1 0 0 0 1 2 x 1 0 0 0 0
+0 0 0 0 1 x 2 1 1 0 0 0 1 2 2 1 0 0 0 0
+0 0 0 0 1 1 1 0 0 0 0 0 1 x 2 1 0 0 0 0
+0 0 0 0 0 0 0 1 2 2 1 0 1 2 x 1 0 0 0 0
+1 1 1 1 1 0 0 1 x x 2 1 1 1 2 2 2 1 1 0
+x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
+2 x 3 x 2 0 0 0 0 0 1 2 2 1 1 1 2 1 2 x
+2 3 3 3 2 1 0 0 0 0 0 1 x 1 0 0 0 1 2 2
+x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
+1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
 """.strip()
+
+
 
 def open(n,m):
     res = [i.split(' ') for i in result.split('\n')]
@@ -353,4 +429,4 @@ def open(n,m):
         raise ValueError
     return res[n][m]
     
-print(solve_mine(gamemap, 6))
+print(solve_mine(gamemap, 58))
