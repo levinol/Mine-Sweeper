@@ -1,3 +1,5 @@
+import sys
+import json
 def solve_mine(map, n):
     # coding and coding...
     mine = [i.split(' ') for i in map.split('\n')]
@@ -7,7 +9,7 @@ def solve_mine(map, n):
         print('No bomb scenario')
         if n == 0:
             for r, c in field.status_dict['b']:
-                field.map[r][c] = open(r,c)
+                field.map[r][c] = map_open(r,c)
             return field.get_map()
         elif n == len(field.status_dict['b']):
             for r, c in field.status_dict['b']:
@@ -40,7 +42,7 @@ def solve_mine(map, n):
         if len(field.status_dict['b']) > 0:
             if n - len(field.status_dict['x']) == 0:
                 for r, c in field.status_dict['b']:
-                        field.map[r][c] = open(r,c)
+                        field.map[r][c] = map_open(r,c)
                 return field.get_map()
             elif n - len(field.status_dict['x']) == len(field.status_dict['b']):
                 for r, c in field.status_dict['b']:
@@ -153,7 +155,7 @@ class MineSweeper():
                 self.status_dict['u'].append((row,column))
             elif c_x == int(self.map[row][column]):
                 for r, c in near:
-                    self.map[r][c] = open(r,c)
+                    self.map[r][c] = map_open(r,c)
                     self.status_dict['b'].remove((r,c))
                     self.status_dict['n'].append((r,c))
                 self.status_dict['n'].remove((row,column))
@@ -187,9 +189,9 @@ class MineSweeper():
                 print(i, '->', j)
                 maybe_x, fo_arr, flag = modulate_x(self.map, self.status_dict, i, j,left_bombs)
                 if flag == 1:
-                    self.map[j[0]][j[1]] = open(j[0],j[1])
+                    self.map[j[0]][j[1]] = map_open(j[0],j[1])
                     changes_flag = 1
-                    print('I opened')
+                    print('I map_opened')
                     self.status_dict['b'].remove(j)
                     self.status_dict['n'].append(j)
                     break
@@ -221,8 +223,8 @@ class MineSweeper():
             print('F_o:', temp_fo_dict)
             for cell, count in temp_fo_dict.items():
                 if count == iter_count:
-                    print('Modulation found open cell', cell, count)
-                    self.map[cell[0]][cell[1]] = open(cell[0],cell[1])
+                    print('Modulation found map_open cell', cell, count)
+                    self.map[cell[0]][cell[1]] = map_open(cell[0],cell[1])
                     changes_flag = 1
                     self.status_dict['b'].remove(cell)
                     self.status_dict['n'].append(cell)
@@ -231,8 +233,8 @@ class MineSweeper():
             #Речекнуть
             if left_bombs == 1 and iter_count < len(temp_bomb_dict):
                 for i in set(temp_bomb_dict.keys()) - set(temp_dict[i][2]):
-                    print('Kinda final open', i)
-                    self.map[i[0]][i[1]] = open(i[0],i[1])
+                    print('Kinda final map_open', i)
+                    self.map[i[0]][i[1]] = map_open(i[0],i[1])
                     changes_flag = 1
                     self.status_dict['b'].remove(i)
                     self.status_dict['n'].append(i)    
@@ -248,7 +250,7 @@ class MineSweeper():
 
 def modulate_x(map, stat_dict, number, bomb, n_left):
     maybe_x_arr = [bomb]
-    fake_opened_arr = []
+    fake_map_opened_arr = []
     #check neighb
     #while?
     used_set = set(stat_dict['u'])
@@ -262,7 +264,7 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
         for row, column in numers_for_iteration:
             #ЧЕКНУТЬ СОСЕДЕЙ НА ДРУГОЙ СТОРОНЕ
             #check neighb
-            c_x, c_h, near = x_fake(map, maybe_x_arr, fake_opened_arr, row, column)
+            c_x, c_h, near = x_fake(map, maybe_x_arr, fake_map_opened_arr, row, column)
             ma_numb = int(map[row][column])
             if c_x + c_h == ma_numb:
                 for r, c in near:
@@ -274,7 +276,7 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
                 used_numbers.append((row,column))
             elif c_x == ma_numb:
                 for r, c in near:
-                    fake_opened_arr.append((r,c))
+                    fake_map_opened_arr.append((r,c))
                     numbers.update(intersection(map,(row,column), (r,c), used_set))
                 #remove from numbers
                 fork_counter = 0
@@ -294,7 +296,7 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
                         print('Fork intersection')
                         near_set = set()
                         for forks in numbers:
-                            c_x2, c_h2, near2 = x_fake(map, maybe_x_arr, fake_opened_arr, forks[0], forks[1])
+                            c_x2, c_h2, near2 = x_fake(map, maybe_x_arr, fake_map_opened_arr, forks[0], forks[1])
                             if near_set:
                                 near_set.intersection_update(near2)
                             else:
@@ -323,7 +325,7 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
             elif c_x == 0 and ma_numb!= 0:
                 print('We are in fucked scenario')
                 flag = 1
-        if n_left - len(maybe_x_arr) > 0 and set(maybe_x_arr) | set(fake_opened_arr) == set(stat_dict['b']):
+        if n_left - len(maybe_x_arr) > 0 and set(maybe_x_arr) | set(fake_map_opened_arr) == set(stat_dict['b']):
             print('We are in fucked scenario')
             flag = 1
             
@@ -334,7 +336,7 @@ def modulate_x(map, stat_dict, number, bomb, n_left):
         #print('Файнал чек',len(set(stat_dict['n'])), len(set(used_numbers)),  set(used_numbers) - set(stat_dict['n']), sep = '\n')
         #print(stat_dict)
     
-    return maybe_x_arr, fake_opened_arr, flag
+    return maybe_x_arr, fake_map_opened_arr, flag
 
 
 def x_fake(map, bomb_arr, fake_arr, n, m):
@@ -385,39 +387,16 @@ def near_n(map, cell):
     return near_n
 
 
-#58
-gamemap = """
-0 0 0 0
-0 0 0 0
-? ? 0 0
-? ? ? ?
-? ? ? ?
-? ? ? ?
-? ? 0 0
-0 0 0 0
-0 0 0 0
-0 0 0 0
-""".strip()
-result = """
-0 0 0 0
-0 0 0 0
-1 1 0 0
-x 2 1 1
-x 3 1 x
-x 2 1 1
-1 1 0 0
-0 0 0 0
-0 0 0 0
-0 0 0 0
-""".strip()
 
-
-
-def open(n,m):
+def map_open(n,m):
     res = [i.split(' ') for i in result.split('\n')]
     if res[n][m] == 'x':
         print('MINE blowed(((')
         raise ValueError
     return res[n][m]
-    
-print(solve_mine(gamemap, 4))
+
+if __name__ == "__main__":
+    print('Receiving cmd args: ',sys.argv[1])
+    with open(sys.argv[1], 'r') as f:
+        gamemap, result = json.load(f)
+    print(solve_mine(gamemap, 4))
