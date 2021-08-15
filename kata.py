@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import json
 def solve_mine(map, n):
     # coding and coding...
@@ -397,6 +397,7 @@ def map_open(n,m):
 
 if __name__ == "__main__":
     print('Receiving cmd args: ',sys.argv[1])
+    print('Lookin for files in directory ', os.listdir('.'))
     with open(sys.argv[1], 'r') as f:
         gamemap, result = json.load(f)
     print(solve_mine(gamemap, 4))
