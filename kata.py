@@ -401,4 +401,11 @@ if __name__ == "__main__":
     with open(sys.argv[1], 'r') as f:
         gamemap, result, mine_count = json.load(f, strict=False)
     print('Checkin sys arg type', type(mine_count))
-    print(solve_mine(gamemap, int(mine_count)))
+    my_func_result = solve_mine(gamemap, int(mine_count))
+    print('Ma func final result', my_func_result)
+    if my_func_result == result:
+        sys.exit(0)
+    elif my_func_result == '?':
+        sys.exit(1)
+    else:
+        sys.exit(2)
