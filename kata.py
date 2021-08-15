@@ -400,4 +400,5 @@ if __name__ == "__main__":
     print('Lookin for files in directory ', os.listdir('.'))
     with open(sys.argv[1], 'r') as f:
         gamemap, result, mine_count = json.load(f, strict=False)
-    print(solve_mine(gamemap, mine_count))
+    print('Checkin sys arg type', type(mine_count))
+    print(solve_mine(gamemap, int(mine_count)))
