@@ -399,5 +399,5 @@ if __name__ == "__main__":
     print('Receiving cmd args: ',sys.argv[1])
     print('Lookin for files in directory ', os.listdir('.'))
     with open(sys.argv[1], 'r') as f:
-        gamemap, result = json.load(f)
+        gamemap, result = json.load(f, strict=False)
     print(solve_mine(gamemap, 4))
